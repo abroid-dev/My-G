@@ -353,7 +353,18 @@ function menu() {
     gsap.to(dlg, { clipPath: `circle(0% at ${origin()})`, duration: 0.7, ease: 'expo.inOut', onComplete: () => { dlg.close(); gsap.set(dlg, { clearProps: 'clipPath' }); } });
   };
   open.addEventListener('click', show);
-  dlg.addEventListener('close', () => { lenis?.start(); open.setAttribute('aria-expanded', 'false'); open.focus(); });
+  // A section chosen in the menu is scrolled to only once the menu has really closed
+  // and smooth scrolling is running again; asking earlier is silently ignored.
+  let pending: string | null = null;
+  dlg.addEventListener('close', () => {
+    lenis?.start();
+    open.setAttribute('aria-expanded', 'false');
+    const id = pending; pending = null;
+    if (id) {
+      const el = $(id);
+      if (el) requestAnimationFrame(() => scrollTo(el));
+    } else open.focus();
+  });
   dlg.addEventListener('cancel', (e) => { e.preventDefault(); hide(); });
   $('[data-index-close]', dlg)?.addEventListener('click', hide);
   links.forEach((a) => {
@@ -370,9 +381,8 @@ function menu() {
     a.addEventListener('click', (e) => {
       e.preventDefault();
       const id = a.getAttribute('href')!;
+      pending = id;
       hide();
-      const el = $(id);
-      window.setTimeout(() => { if (el) scrollTo(el); }, reduced ? 0 : 450);
       history.replaceState(null, '', id);
     });
   });
