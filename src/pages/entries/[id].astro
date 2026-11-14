@@ -1,0 +1,46 @@
+---
+/**
+ * Case-study pages. Generated only for cases with `status: published`.
+ * Structure: Debit (the need) → Contribution → Execution → Reconciliation.
+ */
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { getProfile, getEntries, fmtMonth } from '../../lib/ledger';
+
+export async function getStaticPaths() {
+  const cases = await getCollection('cases', (c) => c.data.status === 'published');
+  return cases.map((c) => ({ params: { id: c.id }, props: { c } }));
+}
+const { c } = Astro.props;
+const profile = await getProfile();
+const entry = (await getEntries()).find((e) => e.id === c.data.entry);
+const { Content } = await render(c);
+---
+<Base title={`${c.data.title} · ${profile.name.first} ${profile.name.last}`} description={c.data.debit} path={`/entries/${c.id}/`}>
+  <main id="main" class="case wrap">
+    <a class="label ink-link" href="/#journey">← Back to the ledger</a>
+    <p class="label label--red case__k">{entry ? `${entry.data.org} · ${fmtMonth(entry.data.start)} – ${fmtMonth(entry.data.end)}` : 'Entry'}</p>
+    <h1 class="case__t">{c.data.title}</h1>
+    <dl class="case__dl">
+      <dt class="label">Debit · the need</dt><dd>{c.data.debit}</dd>
+      <dt class="label">Contribution</dt><dd>{c.data.contribution}</dd>
+      {c.data.execution.length > 0 && (<><dt class="label">Execution</dt><dd><ul>{c.data.execution.map((x) => <li>{x}</li>)}</ul></dd></>)}
+      {c.data.reconciliation.length > 0 && (
+        <><dt class="label">Reconciliation</dt>
+        <dd><ul>{c.data.reconciliation.map((f) => <li><b class="num">{f.figure}</b> {f.label} <span class="label label--muted">Source: {f.source}</span></li>)}</ul></dd></>
+      )}
+    </dl>
+    <div class="case__body"><Content /></div>
+  </main>
+</Base>
+
+<style>
+  .case { padding-block: 48px 120px; display: grid; gap: 28px; max-width: 980px; }
+  .case__t { font-size: var(--t-title-xl); font-weight: 300; letter-spacing: -0.05em; line-height: 0.92; }
+  .case__dl { display: grid; grid-template-columns: 200px 1fr; border-top: 2px solid var(--ink); }
+  .case__dl > * { padding-block: 18px; border-bottom: 1px solid var(--rule); margin: 0; }
+  .case__dl dd { font-size: var(--t-lede); line-height: 1.35; }
+  .case__dl ul { padding-left: 18px; display: grid; gap: 8px; }
+  .case__body { max-width: 62ch; display: grid; gap: 1em; }
+  @media (max-width: 640px) { .case__dl { grid-template-columns: 1fr; } .case__dl dt { border-bottom: 0; padding-bottom: 0; } }
+</style>
