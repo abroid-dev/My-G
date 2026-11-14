@@ -1,0 +1,16 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Page not found · Geleta Addis" path="/404">
+  <main id="main" class="nf wrap">
+    <p class="label label--red">Folio not found</p>
+    <h1>This page isn't in the <em>ledger.</em></h1>
+    <a class="ink-link label" href="/">Return to folio 00 →</a>
+  </main>
+</Base>
+<style>
+  .nf { min-height: 80vh; display: grid; align-content: center; gap: 28px; }
+  h1 { font-size: var(--t-title-xl); font-weight: 300; letter-spacing: -0.05em; line-height: 0.92; max-width: 12ch; }
+  h1 em { color: var(--red); }
+  .nf > a { justify-self: start; }
+</style>
