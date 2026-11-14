@@ -1,0 +1,217 @@
+---
+/**
+ * Running header + portrait menu. The header names the current folio as you
+ * scroll. The menu opens as an ink circle from the button: her portrait on
+ * one side, the sections on the other. Hovering a section rolls its letters
+ * and writes its note under the portrait.
+ */
+import { Picture } from 'astro:assets';
+import portrait from '../assets/portrait-hq.png';
+import SocialIcons from './SocialIcons.astro';
+
+export interface Folio { no: string; id: string; name: string; note?: string }
+interface Props { folios: Folio[]; name: { first: string; last: string }; contact: { email: string; linkedin: string; socials?: Record<string, string> }; portraitAlt: string; tagline?: string; location?: string }
+const { folios, name, contact, portraitAlt, tagline = '', location = '' } = Astro.props;
+const items = folios.filter((f) => f.id !== 'opening');
+---
+<header class="rh" data-header>
+  <div class="rh__inner wrap">
+    <a class="rh__name" href="#top" aria-label={`${name.first} ${name.last}, back to top`}>
+      <span class="rh__full">{name.first} <em>{name.last}</em></span>
+    </a>
+    <p class="rh__folio" aria-hidden="true">
+      <span class="label rh__no" data-folio-no>{folios[0].no}</span>
+      <span class="rh__folio-mask"><span class="rh__folio-name label" data-folio-name>{folios[0].name}</span></span>
+    </p>
+    <div class="rh__tools">
+      <button class="rh__theme" type="button" data-theme-toggle aria-pressed="false" aria-label="Switch to dark theme" data-magnetic="0.25"><svg class="rh__moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" /></svg><svg class="rh__sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg></button>
+      <button class="rh__menu label" type="button" data-index-open aria-haspopup="dialog" aria-controls="index" data-magnetic="0.25">
+        <span class="rh__menu-word"><span data-menu-word>Menu</span></span>
+        <span class="rh__burger" aria-hidden="true"><i></i><i></i></span>
+      </button>
+    </div>
+  </div>
+  <span class="rh__progress" aria-hidden="true" data-progress></span>
+</header>
+
+<dialog class="pm" id="index" aria-labelledby="pm-title" data-index>
+  <div class="pm__inner wrap">
+    <div class="pm__top">
+      <p class="label" id="pm-title"><span class="pm__red">Index</span> · {name.first} {name.last}</p>
+      <div class="rh__tools">
+        <button class="rh__theme" type="button" data-theme-toggle aria-pressed="false" aria-label="Switch to dark theme" data-magnetic="0.25"><svg class="rh__moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" /></svg><svg class="rh__sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg></button>
+        <button class="rh__menu label" type="button" data-index-close data-magnetic="0.25">
+          <span>Close</span><span class="rh__burger is-x" aria-hidden="true"><i></i><i></i></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="pm__body">
+      <figure class="pm__fig" aria-hidden="true">
+        <div class="pm__photo" data-pm-photo>
+          <Picture src={portrait} formats={['avif', 'webp']} fallbackFormat="jpg" quality={90} widths={[480, 720, 1000, 1400]} sizes="(max-width: 760px) 40vw, 34vw" alt="" loading="lazy" />
+        </div>
+        <figcaption class="pm__note">
+          <span class="label pm__note-no" data-pm-no>00</span>
+          <span class="pm__note-text" data-pm-note>{portraitAlt.split(',')[0]}</span>
+        </figcaption>
+      </figure>
+
+      <nav aria-label="Sections" class="pm__nav">
+        <ol class="pm__list" role="list">
+          {items.map((f) => (
+            <li class="pm__item">
+              <a href={`#${f.id}`} data-index-link data-note={f.note ?? f.name} data-no={f.no}>
+                <span class="pm__no label">{f.no}</span>
+                <span class="pm__roll">
+                  <span class="index__name pm__name">{f.name}</span>
+                  <span class="pm__name pm__name--b" aria-hidden="true">{f.name}</span>
+                </span>
+                <span class="pm__sub">{f.note ?? ''}</span>
+                <span class="pm__arrow" aria-hidden="true">→</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </div>
+
+    <div class="pm__foot">
+      <p class="pm__who"><em>{tagline}</em>{location && <span class="label">{location}</span>}</p>
+      <div class="pm__reach">
+        <a class="ink-link label" href={`mailto:${contact.email}`}>{contact.email}</a>
+        <SocialIcons email={contact.email} linkedin={contact.linkedin} socials={contact.socials} size="sm" />
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .rh {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50;
+    background: color-mix(in oklab, var(--paper) 82%, transparent);
+    backdrop-filter: saturate(1.3) blur(14px); -webkit-backdrop-filter: saturate(1.3) blur(14px);
+    transition: transform .6s var(--ease-out);
+  }
+  .rh.is-hidden { transform: translateY(-100%); }
+  .rh__inner { height: var(--header-h); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; }
+  .rh__name { justify-self: start; font-size: 1.125rem; letter-spacing: -0.01em; }
+  .rh__name em { color: var(--red); }
+  .rh__folio { display: flex; gap: 10px; align-items: baseline; white-space: nowrap; }
+  .rh__no { color: var(--red); }
+  .rh__folio-mask { display: inline-block; overflow: hidden; vertical-align: bottom; }
+  .rh__folio-name { display: inline-block; }
+
+  .rh__tools { justify-self: end; display: flex; align-items: center; gap: 10px; }
+  .rh__theme {
+    width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center;
+    border: 1px solid var(--rule-soft); background: var(--paper-3); color: var(--ink);
+    transition: background-color .3s, color .3s, border-color .3s, transform .5s var(--ease-out);
+  }
+  .rh__theme:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); transform: rotate(18deg); }
+  .rh__theme svg { width: 18px; height: 18px; grid-area: 1 / 1; }
+  .rh__sun { display: none; }
+  :global(:root[data-theme='dark']) .rh__sun { display: block; }
+  :global(:root[data-theme='dark']) .rh__moon { display: none; }
+  :global(:root[data-theme='dark']) .pm__photo :global(img) { filter: brightness(0.9) saturate(0.95); }
+  .rh__menu {
+    justify-self: end; display: inline-flex; align-items: center; gap: 12px; padding: 10px 16px; min-height: 42px;
+    border: 1px solid var(--rule-soft); border-radius: 999px; background: var(--paper-3);
+    transition: background-color .3s, color .3s, border-color .3s;
+  }
+  .rh__menu:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .rh__menu-word { display: inline-block; overflow: hidden; }
+  .rh__burger { width: 18px; height: 8px; position: relative; display: inline-block; }
+  .rh__burger i { position: absolute; left: 0; right: 0; height: 1px; background: currentColor; transition: transform .5s var(--ease-out); }
+  .rh__burger i:first-child { top: 0; }
+  .rh__burger i:last-child { bottom: 0; }
+  .rh__menu:hover .rh__burger:not(.is-x) i:first-child { transform: scaleX(0.6); transform-origin: right; }
+  .rh__burger.is-x i:first-child { transform: translateY(3.5px) rotate(45deg); }
+  .rh__burger.is-x i:last-child { transform: translateY(-3.5px) rotate(-45deg); }
+
+  .rh__progress { position: absolute; left: 0; bottom: 0; height: 1px; width: 100%; background: var(--red); transform-origin: left; transform: scaleX(var(--p, 0)); }
+
+  @media (max-width: 640px) {
+    .rh__inner { grid-template-columns: 1fr auto; }
+    .rh__folio { display: none; }
+  }
+
+  /* ── Portrait menu ── */
+  .pm {
+    width: 100%; max-width: none; height: 100%; max-height: none; margin: 0; padding: 0; border: 0;
+    background: var(--paper-2); color: var(--ink); overflow: hidden;
+    padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pm::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(60% 70% at 18% 55%, rgb(179 38 46 / 0.07), transparent 70%), radial-gradient(50% 60% at 85% 20%, rgb(166 124 46 / 0.08), transparent 70%); }
+  .pm::backdrop { background: transparent; }
+  .pm__inner { position: relative; height: 100%; display: grid; grid-template-rows: auto 1fr auto; gap: clamp(14px, 3vh, 28px); padding-bottom: 26px; }
+  .pm__top { height: var(--header-h); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--rule); }
+  .pm__red { color: var(--red); }
+  .pm__body { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap); align-items: center; min-height: 0; }
+  .pm__fig { grid-column: 1 / span 4; margin: 0; position: relative; }
+  .pm__photo { position: relative; aspect-ratio: 4 / 5; max-height: 66vh; border-radius: 22px; overflow: hidden; background: var(--backdrop); box-shadow: 0 30px 60px -30px rgb(31 26 36 / 0.35); }
+  .pm__photo :global(img) { width: 100%; height: 100%; object-fit: cover; object-position: 50% 24%; }
+  .pm__photo::after { content: ''; position: absolute; inset: auto 0 0 0; height: 46%; background: linear-gradient(to top, rgb(31 26 36 / 0.78), transparent); pointer-events: none; }
+  .pm__note { position: absolute; left: 20px; right: 20px; bottom: 18px; z-index: 1; display: grid; gap: 6px; color: #f7f3ec; }
+  .pm__note-no { color: rgb(247 243 236 / 0.75); }
+  .pm__note-text { font-family: var(--serif); font-style: italic; font-size: var(--t-lede); line-height: 1.15; }
+  .pm__nav { grid-column: 6 / -1; }
+  .pm__list { display: grid; border-top: 1px solid var(--rule); }
+  .pm__item { border-bottom: 1px solid var(--rule); }
+  .pm__item a { position: relative; display: grid; grid-template-columns: 52px 1fr minmax(0, 24ch) 28px; align-items: center; column-gap: 14px; padding-block: clamp(12px, 2.2vh, 24px); padding-inline: 10px; margin-inline: -10px; border-radius: 14px; transition: background-color .35s, padding .45s var(--ease-out); }
+  .pm__item a:hover, .pm__item a:focus-visible { background: var(--paper-3); padding-inline: 22px 14px; }
+  .pm__no { color: var(--ink-3); transition: color .3s; }
+  .pm__roll { position: relative; overflow: hidden; display: block; height: 1.12em; padding-top: 0.04em; font-size: clamp(2rem, 1rem + 3.2vw, 4.2rem); line-height: 1; }
+  .pm__name { display: block; font-weight: 300; letter-spacing: -0.045em; font-variation-settings: 'opsz' 72; transition: transform .7s var(--ease-out); line-height: 1.08; }
+  .pm__name--b { position: absolute; left: 0; top: 0.04em; font-style: italic; color: var(--red); transform: translateY(115%); }
+  .pm__item a:hover .pm__name, .pm__item a:focus-visible .pm__name { transform: translateY(-115%); }
+  .pm__item a:hover .pm__name--b, .pm__item a:focus-visible .pm__name--b { transform: translateY(0); }
+  .pm__item a:hover .pm__no, .pm__item a.is-current .pm__no { color: var(--red); }
+  .pm__item a.is-current .pm__no::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--red); margin-right: 8px; vertical-align: 1px; }
+  .pm__sub { color: var(--ink-3); font-size: 0.875rem; line-height: 1.3; text-align: right; }
+  .pm__arrow { color: var(--red); opacity: 0; transform: translateX(-10px); transition: opacity .3s, transform .45s var(--ease-out); font-size: 1.25rem; }
+  .pm__item a:hover .pm__arrow, .pm__item a:focus-visible .pm__arrow { opacity: 1; transform: none; }
+  .pm__foot { display: flex; justify-content: space-between; align-items: center; gap: 12px 24px; flex-wrap: wrap; padding-top: 18px; border-top: 1px solid var(--rule); }
+  .pm__who { display: flex; align-items: baseline; gap: 6px 18px; flex-wrap: wrap; margin: 0; }
+  .pm__who em { font-family: var(--serif); font-size: var(--t-lede); color: var(--ink-2); }
+  .pm__who .label { color: var(--ink-3); }
+  .pm__reach { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  /* Short screens (landscape phones): the menu keeps every row on one screen */
+  @media (max-height: 560px) {
+    .pm__inner { gap: 6px; padding-bottom: 10px; }
+    .pm__photo { display: none; }
+    .pm__fig { display: none; }
+    .pm__nav { grid-column: 1 / -1; }
+    .pm__item a { padding-block: 6px; }
+    .pm__roll { font-size: 1.9rem; }
+    .pm__foot { padding-top: 8px; }
+    .pm__who em { font-size: 0.95rem; }
+  }
+  @media (max-width: 900px) {
+    .pm__item a { grid-template-columns: 40px 1fr 24px; }
+    .pm__sub { display: none; }
+  }
+  @media (max-width: 760px) {
+    .pm { height: 100dvh; max-height: 100dvh; }
+    .pm__inner { gap: 10px; padding-bottom: 14px; }
+    .pm__body { display: block; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-block: 8px 4px; }
+    /* a compact profile line instead of a large photo card */
+    .pm__fig { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+    .pm__photo { flex: none; width: 68px; height: 68px; aspect-ratio: 1; max-height: none; border-radius: 50%; box-shadow: 0 0 0 2px var(--paper), 0 0 0 3px var(--rule); }
+    .pm__photo::after { display: none; }
+    .pm__photo :global(img) { object-position: 50% 20%; }
+    .pm__note { position: static; color: var(--ink); gap: 2px; }
+    .pm__note-no { display: none; }
+    .pm__note-text { color: var(--ink); font-size: 1.15rem; }
+    .pm__nav { margin-top: 4px; }
+    .pm__item a { grid-template-columns: 38px 1fr 22px; min-height: 64px; padding-block: 10px; }
+    .pm__roll { font-size: clamp(1.9rem, 9.5vw, 2.6rem); }
+    .pm__arrow { opacity: 0.55; transform: none; }
+    .pm__item a.is-current .pm__arrow { opacity: 1; }
+    .pm__foot { flex-direction: column; align-items: flex-start; gap: 10px; padding-top: 12px; }
+    .pm__who { display: block; }
+    .pm__who .label { display: none; }
+    .pm__who em { font-size: 0.95rem; line-height: 1.3; }
+    .pm__reach { width: 100%; justify-content: space-between; gap: 10px; }
+  }
+</style>
