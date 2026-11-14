@@ -1,0 +1,25 @@
+# Chart of accounts: areas of expertise. Each one is "backed" by the entries
+# that list the account code in their `accounts` field, so evidence is
+# computed rather than claimed.
+- id: "1000"
+  code: "1000"
+  title: Campaigns and communication
+  note: Developing and running marketing campaigns, managing their budgets, and writing proposals for partner companies.
+  studies: [lunar-ma]
+- id: "2000"
+  code: "2000"
+  title: Customer operations
+  note: Support operations, complaint resolution and service recovery, from the call centre to fintech customer operations.
+- id: "3000"
+  code: "3000"
+  title: Partnerships and key accounts
+  note: Sales and partnership leadership, merchant onboarding and key accounts, with alliances across banks, mobile network operators and fintech players.
+- id: "4000"
+  code: "4000"
+  title: Operations, risk and compliance
+  note: Process design, automation, KPIs, data integrity, financial regulation and anti-fraud measures.
+  studies: [google-cybersecurity, hawassa-engineering]
+- id: "5000"
+  code: "5000"
+  title: Commercial leadership
+  note: Leading commercial strategy, revenue, brand and the commercial teams at C-level.
