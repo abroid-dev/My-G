@@ -1,0 +1,112 @@
+---
+import '@fontsource-variable/newsreader/opsz.css';
+import '@fontsource-variable/newsreader/opsz-italic.css';
+import '@fontsource-variable/bricolage-grotesque/standard.css';
+import '../styles/tokens.css';
+import '../styles/global.css';
+import { getImage } from 'astro:assets';
+import portrait from '../assets/portrait.png';
+import { getProfile } from '../lib/ledger';
+
+interface Props {
+  title?: string;
+  description?: string;
+  path?: string;
+}
+const profile = await getProfile();
+const { title = profile.seo.title, description = profile.seo.description, path = '/' } = Astro.props;
+// On a review deploy (GitHub Pages) the page names itself, so the link preview image works.
+// On the real domain it uses seo.siteUrl from profile.yaml.
+const reviewing = Boolean(import.meta.env.PUBLIC_NOINDEX) && Boolean(Astro.site);
+const origin = reviewing ? Astro.site!.origin : new URL(profile.seo.siteUrl).origin;
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+const canonical = new URL(`${basePath}${path}`, origin).toString();
+const og = await getImage({ src: portrait, width: 800, height: 800, format: 'jpg' });
+const ogUrl = new URL(og.src, origin).toString();
+
+const personLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: `${profile.name.first} ${profile.name.last}`,
+  jobTitle: 'Chief Commercial Officer',
+  worksFor: [
+    { '@type': 'Organization', name: 'Emaal' },
+    { '@type': 'Organization', name: 'FinPay Digital Financial Solution S.C' },
+  ],
+  address: { '@type': 'PostalAddress', addressLocality: 'Addis Ababa', addressCountry: 'ET' },
+  sameAs: [profile.contact.linkedin],
+  alumniOf: [
+    { '@type': 'CollegeOrUniversity', name: 'Hawassa University' },
+    { '@type': 'CollegeOrUniversity', name: 'Lunar International College' },
+  ],
+  url: new URL(`${basePath}/`, origin).toString(),
+};
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#f7f3ec" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/favicon.svg`} type="image/svg+xml" />
+    {import.meta.env.PUBLIC_NOINDEX && <meta name="robots" content="noindex, nofollow" />}
+    <meta property="og:type" content="profile" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogUrl} />
+    <meta name="twitter:card" content="summary" />
+    <script type="application/ld+json" set:html={JSON.stringify(personLd)} />
+    <!-- Before paint: theme, review mode, and whether to play the intro. -->
+    <script is:inline>
+      (function () {
+        var d = document.documentElement;
+        d.classList.add('js');
+        // Theme: her saved choice, else the system setting. Set before first paint so nothing flashes.
+        var t = 'light';
+        try {
+          var saved = localStorage.getItem('theme');
+          t = saved === 'light' || saved === 'dark' ? saved : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        } catch (e) {}
+        d.setAttribute('data-theme', t);
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute('content', t === 'dark' ? '#0f0c10' : '#f7f3ec');
+        try {
+          if (/[?&]review\b/.test(location.search)) sessionStorage.setItem('ledger-review', '1');
+          if (/[?&]public\b/.test(location.search)) sessionStorage.removeItem('ledger-review');
+          if (sessionStorage.getItem('ledger-review')) d.classList.add('is-review');
+        } catch (e) {}
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        d.classList.add('m-wait');
+        try { if (!sessionStorage.getItem('ledger-intro')) d.classList.add('has-intro'); } catch (e) { d.classList.add('has-intro'); }
+        // Failsafe: never leave the page hidden if the motion script fails.
+        setTimeout(function () { d.classList.remove('m-wait', 'has-intro'); }, 5000);
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="intro" aria-hidden="true" data-intro>
+      <div class="intro__inner">
+        <span class="label intro__top">Addis Ababa, Ethiopia</span>
+        <p class="intro__word">Geleta <em>Addis</em></p>
+        <div class="intro__bottom">
+          <span class="label">Commercial leadership</span>
+          <span class="intro__count num" data-intro-count>000</span>
+        </div>
+        <span class="intro__track"><i data-intro-bar></i></span>
+      </div>
+    </div>
+    <div class="cursor" aria-hidden="true" data-cursor-ring><span data-cursor-label></span></div>
+    <div class="cursor-dot" aria-hidden="true" data-cursor-dot></div>
+    <p class="review-badge label" role="status">Review mode: placeholders visible · <a href="?public">Exit</a></p>
+    <slot />
+    <script>
+      import '../scripts/main.ts';
+    </script>
+  </body>
+</html>
