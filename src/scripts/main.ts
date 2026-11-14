@@ -30,9 +30,11 @@ function smooth() {
   gsap.ticker.lagSmoothing(0);
 }
 function scrollTo(target: HTMLElement | number) {
-  if (lenis) lenis.scrollTo(target, { offset: 0, duration: 1.6, easing: (t) => 1 - Math.pow(1 - t, 4) });
-  else if (typeof target === 'number') window.scrollTo({ top: target });
-  else target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+  // Land exactly on the section's top (not offset by the page's scroll-padding), so
+  // the pinned scenes start from their first step.
+  const y = typeof target === 'number' ? target : target.getBoundingClientRect().top + window.scrollY;
+  if (lenis) lenis.scrollTo(y, { duration: 1.6, easing: (t) => 1 - Math.pow(1 - t, 4) });
+  else window.scrollTo({ top: y, behavior: reduced ? 'auto' : 'smooth' });
 }
 function anchors() {
   document.addEventListener('click', (e) => {
