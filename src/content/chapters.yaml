@@ -1,0 +1,31 @@
+# The journey, in five chapters. Each "carriedForward" line names what the
+# chapter handed to the next, using only responsibilities listed on LinkedIn.
+- id: foundation
+  order: 1
+  numeral: I
+  title: Foundation
+  span: 2014 – 2021
+  carriedForward: An engineer's training in systems, and a diploma in cargo handling and customer care.
+- id: market
+  order: 2
+  numeral: II
+  title: Market
+  span: 2021 – 2024
+  carriedForward: Campaigns, budgets and a team led to its targets, plus a master's degree in business administration.
+- id: frontline
+  order: 3
+  numeral: III
+  title: Frontline
+  span: 2021 – 2023
+  carriedForward: The customer's side of the counter and the call, from selling to merchants to bookings, refunds, disruptions and sales targets.
+- id: system
+  order: 4
+  numeral: IV
+  title: System
+  span: 2024 – 2025
+  carriedForward: Process design, KPIs, compliance, anti-fraud and customer operations.
+- id: revenue
+  order: 5
+  numeral: V
+  title: Revenue
+  span: 2025 – present
