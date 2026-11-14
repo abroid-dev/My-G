@@ -1,0 +1,550 @@
+---
+/**
+ * THE LIVING PORTRAIT
+ * One particle field (src/scripts/particles.ts) runs behind six scenes.
+ * Each <section data-scene="…"> names the shape the particles take while
+ * it is on screen. All text comes from src/content; nothing is hard-coded.
+ */
+import { getCollection } from 'astro:content';
+import { getImage } from 'astro:assets';
+import portrait from '../assets/portrait.png';
+import portraitCut from '../assets/portrait-cut-hq.png';
+import portraitHQ from '../assets/portrait-hq.png';
+import Base from '../layouts/Base.astro';
+import RunningHeader, { type Folio } from '../components/RunningHeader.astro';
+import SocialIcons from '../components/SocialIcons.astro';
+import { getProfile, getEntries, getStudies, getChapters, fmtMonth, fmtDuration, fmtSpan, months, monthIndex, AS_OF } from '../lib/ledger';
+
+const profile = await getProfile();
+const entries = await getEntries();
+const studies = await getStudies();
+const chapters = await getChapters();
+const accounts = (await getCollection('accounts')).map((a) => a.data).sort((a, b) => a.code.localeCompare(b.code));
+const featured = entries.find((e) => e.data.featured) ?? entries[entries.length - 1];
+const heroOrgs = [featured, ...entries.filter((e) => e !== featured && e.data.current && e.data.role === featured.data.role)].map((e) => e.data.org).join(' and ');
+const sample = await getImage({ src: portrait, width: 600, height: 600, format: 'jpg', quality: 88 });
+const still = await getImage({ src: portraitHQ, width: 1400, format: 'webp', quality: 92 });
+const crisp = await getImage({ src: portraitCut, width: 1600, format: 'webp', quality: 95 });
+
+const expertise = accounts.map((a) => ({
+  ...a,
+  backing: entries.filter((e) => e.data.accounts.includes(a.code)).map((e) => `${e.data.role}, ${e.data.org}`),
+}));
+// Journey: everything below is derived from the entries themselves.
+const accountBy = new Map(accounts.map((a) => [a.code, a]));
+const shared = (a: { start: string; end: string | null }, b: { start: string; end: string | null }) =>
+  Math.min(monthIndex(a.end ?? AS_OF), monthIndex(b.end ?? AS_OF)) - Math.max(monthIndex(a.start), monthIndex(b.start)) + 1;
+const journey = entries.map((e, i) => ({
+  e, i,
+  chapter: chapters.find((c) => c.id === e.data.chapter)?.data,
+  along: entries.filter((o) => o !== e && shared(e.data, o.data) >= 2),
+  areas: e.data.accounts.map((c) => accountBy.get(c)).filter((a): a is NonNullable<typeof a> => !!a),
+  weight: Math.sqrt(months(e.data.start, e.data.end)),
+}));
+const wMax = Math.max(...journey.map((j) => j.weight));
+const weights = journey.map((j) => (j.weight / wMax).toFixed(3)).join(',');
+const annotations = profile.annotations as { key: string; label: string; detail: string; study?: string }[];
+const keyOf = (id: string) => annotations.find((a) => a.study === id)?.key;
+const kindLabel: Record<string, string> = { degree: 'Degree', diploma: 'Diploma', certificate: 'Certificate' };
+const pad = (n: number) => String(n).padStart(2, '0');
+const c = profile.contact;
+const numberWords = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve'];
+const count = (n: number) => numberWords[n] ?? String(n);
+
+const folios: Folio[] = [
+  { no: '00', id: 'opening', name: 'Opening' },
+  { no: '01', id: 'statement', name: 'In one line', note: 'The thesis, in three lines' },
+  { no: '02', id: 'journey', name: 'The journey', note: `${count(entries.length)} roles, ${fmtSpan(entries[0].data.start, null)}now` },
+  { no: '03', id: 'expertise', name: 'Expertise', note: `${count(expertise.length)} areas, one flower` },
+  { no: '04', id: 'notes', name: 'Education', note: 'Degrees and certification' },
+  { no: '05', id: 'contact', name: 'Contact', note: c.prompt },
+];
+---
+<Base>
+  <div class="spot" data-spot aria-hidden="true"></div>
+  <canvas class="field" data-field data-src={sample.src} data-nodes={entries.length} data-weights={weights} aria-hidden="true"></canvas>
+  <img class="crisp" data-crisp src={crisp.src} width="800" height="800" alt="" aria-hidden="true" decoding="async" />
+  <RunningHeader folios={folios} name={profile.name} contact={profile.contact} portraitAlt={profile.portraitAlt} tagline={`${featured.data.role} at ${heroOrgs}`} location={profile.location} />
+
+  <main id="main">
+    <!-- ───────────── 00 · OPENING ───────────── -->
+    <section class="sc hero" id="opening" data-scene="portrait" data-folio="00" data-hero aria-label="Opening">
+      <div class="wrap hero__in">
+        <img class="hero__still" src={still.src} width={still.attributes.width} height={still.attributes.height} alt={profile.portraitAlt} />
+        <div class="hero__text">
+          <p class="label hero__loc js-fade"><i class="dot" aria-hidden="true"></i>{profile.location}</p>
+          <h1 class="hero__name" id="top">
+            <span class="js-chars">{profile.name.first}</span>
+            <span class="js-chars"><em>{profile.name.last}</em></span>
+          </h1>
+          <p class="hero__role js-fade">{featured.data.role} <span>at</span> {heroOrgs}</p>
+          <p class="hero__pos js-fade">{profile.positioning.title}</p>
+          {profile.positioning.provisional && <span class="pending">Provisional. Geleta to confirm.</span>}
+        </div>
+        <ul class="hero__creds js-fade" role="list">
+          {annotations.map((a) => <li><a href="#notes"><b>{a.key}</b><span>{a.label}</span></a></li>)}
+        </ul>
+        <a class="hero__cue label js-fade" href="#statement" data-magnetic><span>Scroll</span><i aria-hidden="true"></i></a>
+      </div>
+    </section>
+
+    <!-- ───────────── 01 · IN ONE LINE ───────────── -->
+    <section class="sc say" id="statement" data-dim data-scene="wave" data-folio="01" aria-labelledby="say-title">
+      <div class="wrap say__in">
+        <h2 class="say__thesis" id="say-title" data-ink>
+          {(profile.thesis.lead as string).split(' ').map((w) => <><span class="w">{w}</span>{' '}</>)}<em class="w">{profile.thesis.mark}</em>
+        </h2>
+        <div class="say__body">
+          {(profile.statement as string[]).map((p) => <p class="js-lines">{p}</p>)}
+          {profile.statementPending.length > 0 && <div class="pending-list">{profile.statementPending.map((t: string) => <span class="pending">{t}</span>)}</div>}
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── 02 · THE JOURNEY ───────────── -->
+    <section class="sc jr" id="journey" data-scene="path" data-folio="02" data-journey style={`--steps:${entries.length}`} aria-labelledby="jr-title">
+      <h2 class="sr-only" id="jr-title">{count(entries.length)} roles, one direction.</h2>
+      <div class="jr__pin">
+        <div class="jr__labels" aria-hidden="true">
+          {entries.map((e, i) => <span class="jr__dot" data-node={i}><b>{e.data.start.slice(0, 4)}</b>{e.data.org}</span>)}
+        </div>
+        <div class="wrap jr__in">
+          <ol class="jr__cards" role="list">
+            {journey.map(({ e, i, chapter, along, areas }) => {
+              const lists = e.data.customerSide.length > 0 || e.data.companySide.length > 0;
+              return (
+                <li class={`card ${i === 0 ? 'is-on' : ''}`} id={`entry-${e.id}`} data-step={i}>
+                  <div class="card__side">
+                    <p class="card__no"><b>{pad(i + 1)}</b><span>/ {pad(entries.length)}</span></p>
+                    <p class="card__when">{fmtMonth(e.data.start)} – {fmtMonth(e.data.end)}</p>
+                    <p class="card__len">{fmtDuration(months(e.data.start, e.data.end))}{e.data.current && <span class="card__now">Now</span>}</p>
+                    {chapter && <p class="card__chap label">Chapter {chapter.numeral} · {chapter.title}</p>}
+                  </div>
+                  <div class="card__main">
+                    <h3 class={`card__role${e.data.role.length > 26 ? ' is-long' : ''}`}>{e.data.role}</h3>
+                    <p class="card__org"><em>{e.data.org}</em>{e.data.roleNote && <><span class="card__sep"> · </span><span class="card__note">{e.data.roleNote}</span></>}</p>
+                    {along.length > 0 && <p class="card__along"><span class="label">Same months</span>{along.map((o) => `${o.data.role}, ${o.data.org}`).join('  ·  ')}</p>}
+                    {lists ? (
+                      <div class="card__sides">
+                        {e.data.customerSide.length > 0 && (
+                          <div><p class="label">For the customer</p><ul role="list">{e.data.customerSide.map((x) => <li>{x}</li>)}</ul></div>
+                        )}
+                        {e.data.companySide.length > 0 && (
+                          <div><p class="label">For the company</p><ul role="list" class={e.data.companySide.length > 4 ? 'is-long' : ''}>{e.data.companySide.map((x) => <li>{x}</li>)}</ul></div>
+                        )}
+                      </div>
+                    ) : (
+                      areas.length > 0 && (
+                        <ul class="card__areas" role="list">
+                          {areas.map((a) => <li><b>{a.title}</b><span>{a.note}</span></li>)}
+                        </ul>
+                      )
+                    )}
+                    {e.data.pending.length > 0 && <div class="pending-list">{e.data.pending.map((p) => <span class="pending">{p}</span>)}</div>}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+
+          <div class="jr__rail" aria-hidden="true">
+            <span class="label">{entries[0].data.start.slice(0, 4)}</span>
+            <span class="jr__bar"><i data-rail></i></span>
+            <span class="label">Now</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── 03 · EXPERTISE ───────────── -->
+    <section class="sc bloom" id="expertise" data-scene="flower" data-folio="03" data-bloom style={`--steps:${expertise.length}`} aria-labelledby="bloom-title">
+      <div class="bloom__pin">
+        <div class="bloom__labels">
+          {expertise.map((a, i) => <button type="button" class="bloom__tip" data-petal={i} aria-label={a.title}>{pad(i + 1)}</button>)}
+        </div>
+        <ol class="bloom__list" role="list">
+          {expertise.map((a, i) => (
+            <li class={`petal ${i === 0 ? 'is-on' : ''}`} data-petal-item={i}>
+              <div class="petal__card">
+                <span class="petal__no">{pad(i + 1)} <i>/ {pad(expertise.length)}</i></span>
+                <h3 class="petal__title">{a.title}</h3>
+                <p>{a.note}</p>
+                {a.backing.length > 0 && <p class="petal__back label">{a.backing.join('  ·  ')}</p>}
+              </div>
+            </li>
+          ))}
+        </ol>
+        <div class="wrap bloom__in">
+          <h2 class="bloom__title" id="bloom-title">{count(expertise.length)} petals, <em>one flower.</em></h2>
+          <p class="bloom__note">Addis Ababa means “new flower”.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── 04 · EDUCATION ───────────── -->
+    <section class="sc learn" id="notes" data-scene="rings" data-folio="04" data-learn style={`--steps:${studies.length}`} aria-labelledby="learn-title">
+      <div class="learn__pin">
+        <div class="wrap learn__in">
+          <header class="learn__head">
+            <h2 class="learn__title" id="learn-title">What it’s built on</h2>
+            <div class="learn__ticks" role="group" aria-label="Credentials">
+              {studies.map((s, i) => <button type="button" class={`learn__tick ${i === 0 ? 'is-on' : ''}`} data-learn-tick={i} aria-label={`${s.data.award}, ${s.data.institution}`}>{pad(i + 1)}</button>)}
+            </div>
+          </header>
+          <ol class="learn__cards" role="list">
+            {studies.map((s, i) => (
+              <li class={`lcard ${i === 0 ? 'is-on' : ''}`} id={`study-${s.id}`} data-learn-item={i}>
+                <p class="lcard__kind label"><b>{pad(i + 1)}</b>/ {pad(studies.length)}  ·  {kindLabel[s.data.kind]}</p>
+                <h3 class="lcard__award">{s.data.award}</h3>
+                <p class="lcard__field">{s.data.field}</p>
+                <p class="lcard__where"><em>{s.data.institution}</em>{s.data.start && <span class="label">{fmtSpan(s.data.start, s.data.end ?? null)}</span>}</p>
+                {s.data.items.length > 0 && <ul class="lcard__items" role="list">{s.data.items.map((x: string) => <li>{x}</li>)}</ul>}
+              </li>
+            ))}
+          </ol>
+          {(profile.languages.length > 0 || profile.skills.length > 0) && (
+            <dl class="learn__also">
+              {profile.languages.length > 0 && <div><dt class="label">Languages</dt><dd>{profile.languages.map((l: { name: string; level: string }) => `${l.name} (${l.level})`).join(' · ')}</dd></div>}
+              {profile.skills.length > 0 && <div><dt class="label">Strengths</dt><dd>{profile.skills.join(' · ')}</dd></div>}
+            </dl>
+          )}
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── 05 · CONTACT ───────────── -->
+    <section class="sc end" id="contact" data-scene="portraitEnd" data-folio="05" aria-labelledby="end-title">
+      <div class="wrap end__in">
+        <div class="end__text">
+          <h2 class="end__title" id="end-title"><span class="js-chars">Let’s</span> <em class="js-chars">talk.</em></h2>
+          <p class="end__prompt js-lines">{c.prompt}</p>
+          <a class="end__mail js-fade" href={`mailto:${c.email}`} data-magnetic="0.12"><span data-email>{c.email}</span></a>
+          <div class="end__row js-fade">
+            <SocialIcons email={c.email} linkedin={c.linkedin} socials={c.socials} />
+            <button class="end__copy label" type="button" data-copy={c.email} data-magnetic>Copy email</button>
+          </div>
+        </div>
+      </div>
+      <footer class="foot wrap">
+        <span>{profile.name.first} <em>{profile.name.last}</em></span>
+        <span class="label">{profile.location}</span>
+        <a class="label ink-link" href="#top">Back to top ↑</a>
+      </footer>
+    </section>
+  </main>
+</Base>
+
+<style>
+  .sc { position: relative; }
+  /* Her real photo: the particles resolve into it once assembled. */
+  .crisp { position: fixed; left: 0; top: 0; z-index: 0; opacity: 0; pointer-events: none; will-change: opacity, transform; -webkit-mask-image: linear-gradient(to bottom, #000 84%, transparent 100%); mask-image: linear-gradient(to bottom, #000 84%, transparent 100%); }
+  :global(html.no-field) .crisp { display: none; }
+  /* Dark only: a warm pool of light behind her, so the navy blazer keeps its outline. */
+  .spot { position: fixed; left: 0; top: 0; z-index: 0; opacity: 0; pointer-events: none; border-radius: 50%; display: none; will-change: opacity, transform;
+    background: radial-gradient(closest-side, rgb(236 150 120 / 0.34), rgb(238 90 98 / 0.13) 56%, transparent 100%); }
+  :global(:root[data-theme='dark']) .spot { display: block; }
+  :global(html.no-field) .spot { display: none !important; }
+  .label b { color: var(--red); font-weight: 600; margin-right: 10px; }
+  em { color: var(--red); }
+
+  /* ── HERO ── */
+  .hero { min-height: 100svh; margin-top: calc(-1 * var(--header-h)); padding-top: var(--header-h); display: flex; }
+  .hero__in { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: 1fr auto; column-gap: var(--col-gap); padding-block: 24px clamp(24px, 4vh, 44px); width: 100%; }
+  .hero__text { grid-column: 1 / span 7; align-self: center; display: grid; gap: clamp(10px, 1.6vh, 20px); justify-items: start; }
+  .hero__loc { display: inline-flex; align-items: center; gap: 10px; color: var(--ink-2); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); animation: ping 2.2s infinite; }
+  @keyframes ping { from { box-shadow: 0 0 0 0 rgb(179 38 46 / 0.4); } to { box-shadow: 0 0 0 12px rgb(179 38 46 / 0); } }
+  .hero__name { display: grid; font-size: clamp(4.4rem, min(1rem + 13.5vw, 28svh), 16.5rem); font-weight: 200; line-height: 0.84; letter-spacing: -0.04em; font-stretch: 92%; margin-left: -0.03em; }
+  .hero__name em { font-weight: 300; letter-spacing: -0.05em; padding-left: 0.28em; }
+  .hero__role { font-size: var(--t-lede); font-weight: 500; letter-spacing: -0.02em; margin-top: clamp(8px, 2vh, 24px); }
+  .hero__role span { color: var(--ink-3); font-weight: 400; }
+  .hero__pos { font-family: var(--serif); font-style: italic; font-size: var(--t-lede); color: var(--ink-2); }
+  .hero__creds { grid-column: 1 / span 6; grid-row: 2; display: flex; gap: 10px 28px; flex-wrap: wrap; padding: 0; margin: 0; }
+  .hero__creds a { display: inline-flex; align-items: center; gap: 10px; font-size: 0.9375rem; color: var(--ink-2); transition: color .2s; }
+  .hero__creds a:hover { color: var(--red); }
+  .hero__creds b { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--red); color: var(--red); font-size: 0.625rem; font-weight: 600; }
+  .hero__cue { grid-column: 10 / -1; grid-row: 2; justify-self: end; align-self: end; display: inline-flex; align-items: center; gap: 14px; color: var(--ink-2); }
+  .hero__cue i { width: 56px; height: 1px; background: var(--rule); position: relative; overflow: hidden; }
+  .hero__cue i::after { content: ''; position: absolute; inset: 0; background: var(--red); animation: cue 2.2s var(--ease-pen) infinite; }
+  @keyframes cue { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(100%); } }
+  @media (min-aspect-ratio: 21/20) and (max-height: 720px) {
+    .hero__in { padding-block: 12px 18px; }
+    .hero__text { gap: 6px; }
+    .hero__role { margin-top: 2px; }
+    .hero__creds { gap: 6px 22px; }
+  }
+  /* Shown only when WebGL is unavailable */
+  .hero__still { display: none; }
+  :global(html.no-field) .hero__still { display: block; grid-column: 8 / -1; grid-row: 1; align-self: center; width: 100%; height: auto; border-radius: 24px; }
+
+  /* ── IN ONE LINE: the thesis on the left, the three lines stacked on the right ── */
+  .say { min-height: 125svh; display: flex; align-items: flex-start; padding-top: 17svh; }
+  .say__in { width: 100%; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap); align-items: end; }
+  .say__thesis { grid-column: 1 / span 7; font-size: clamp(2.6rem, 0.8rem + 6.6vw, 8.5rem); font-weight: 300; line-height: 0.95; letter-spacing: -0.055em; font-stretch: 88%; max-width: 12ch; }
+  .say__thesis em { font-weight: 300; }
+  .say__body { grid-column: 8 / -1; display: grid; padding-bottom: 0.5em; }
+  .say__body p { color: var(--ink-2); line-height: 1.45; padding-block: 16px; border-top: 1px solid var(--rule); }
+  .say__body p:first-child { color: var(--ink); font-weight: 500; font-size: var(--t-lede); line-height: 1.25; border-top-color: var(--red); }
+
+  /* ── JOURNEY: a river of light along the top, the role it is passing below ── */
+  .jr { height: calc(var(--steps) * 78svh + 100svh); }
+  .jr__pin { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+  .jr__in { height: 100%; display: grid; grid-template-rows: 1fr auto; row-gap: clamp(10px, 2vh, 24px); padding-block: calc(var(--header-h) + 12px) 22px; }
+  .jr__cards { grid-row: 1; position: relative; padding: 0; margin: 0; }
+  .card { position: absolute; inset: auto 0 0 0; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap); align-items: end; opacity: 0; transform: translateY(40px); pointer-events: none; transition: opacity .5s var(--ease-out), transform .8s var(--ease-out); }
+  .card.is-on { opacity: 1; transform: none; pointer-events: auto; transition-delay: .12s; }
+  .card.is-past { transform: translateY(-40px); }
+  .card__side { grid-column: 1 / span 3; display: grid; gap: 6px; align-content: end; padding-bottom: 6px; }
+  .card__no { display: flex; align-items: baseline; gap: 10px; margin: 0 0 6px -0.04em; }
+  .card__no b { font-size: clamp(4.4rem, 15vh, 9.5rem); font-weight: 200; letter-spacing: -0.07em; line-height: 0.8; font-stretch: 88%; color: var(--ink); }
+  .card__no span { color: var(--ink-3); font-size: 0.8125rem; letter-spacing: 0.12em; }
+  .card__when { font-weight: 500; letter-spacing: -0.01em; }
+  .card__len { display: flex; align-items: center; gap: 10px; color: var(--ink-2); }
+  .card__now { background: var(--red); color: var(--paper); padding: 3px 9px; border-radius: 999px; font-size: 0.625rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+  .card__chap { color: var(--red); margin-top: 10px; }
+  .card__main { grid-column: 4 / -1; display: grid; gap: clamp(6px, 1.2vh, 12px); align-content: end; }
+  .card__role { font-size: clamp(2rem, min(7.2vh, 1rem + 3.6vw), 4.6rem); font-weight: 300; letter-spacing: -0.05em; line-height: 0.95; font-stretch: 88%; }
+  .card__role.is-long { font-size: clamp(1.7rem, min(5.2vh, 0.8rem + 2.4vw), 3.1rem); line-height: 1; }
+  .card__org { font-size: var(--t-lede); color: var(--ink-2); }
+  .card__org span { font-size: 0.875rem; color: var(--ink-3); }
+  .card__along { color: var(--ink-2); font-size: 0.875rem; line-height: 1.4; }
+  .card__along .label { color: var(--red); margin-right: 12px; }
+  .card__sides { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.9fr); gap: clamp(16px, 2vw, 36px); margin-top: clamp(4px, 1.2vh, 14px); padding-top: clamp(8px, 1.6vh, 16px); border-top: 1px solid var(--rule); }
+  .card__sides ul.is-long { display: block; columns: 2; column-gap: clamp(14px, 1.6vw, 28px); }
+  .card__sides ul.is-long li { break-inside: avoid; margin-bottom: 6px; }
+  .card__sides .label { color: var(--red); margin-bottom: 8px; }
+  .card__sides ul { display: grid; gap: 6px; padding: 0; margin: 0; }
+  .card__sides li { font-size: clamp(0.8125rem, 1.75vh, 0.9375rem); line-height: 1.32; color: var(--ink-2); padding-left: 14px; position: relative; }
+  .card__sides li::before { content: ''; position: absolute; left: 0; top: 0.62em; width: 6px; height: 1px; background: var(--ink-3); }
+  .card__areas { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px clamp(16px, 2vw, 36px); padding: clamp(10px, 2vh, 18px) 0 0; margin: clamp(4px, 1.2vh, 14px) 0 0; border-top: 1px solid var(--rule); }
+  .card__areas li { display: grid; gap: 6px; }
+  .card__areas b { font-size: clamp(1.15rem, 2.6vh, 1.5rem); font-weight: 400; letter-spacing: -0.03em; }
+  .card__areas span { color: var(--ink-2); font-size: 0.9375rem; line-height: 1.4; max-width: 44ch; }
+  .jr__rail { grid-row: 2; display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; color: var(--ink-3); }
+  .jr__bar { height: 1px; background: var(--rule); position: relative; }
+  .jr__bar i { position: absolute; inset: -0.5px 0; height: 2px; background: var(--red); transform-origin: left; transform: scaleX(var(--p, 0)); }
+  .jr__labels { position: absolute; inset: 0; pointer-events: none; }
+  .jr__dot { position: absolute; font-size: 0.75rem; color: var(--ink-3); white-space: nowrap; opacity: 0; transition: opacity .5s, color .3s, font-size .4s var(--ease-out); }
+  .jr__dot b { color: var(--red); font-weight: 600; margin-right: 6px; font-size: 0.625rem; letter-spacing: 0.1em; }
+  :global(.jr.is-live) .jr__dot { opacity: 1; }
+  .jr__dot.is-on { color: var(--ink); font-size: 1rem; font-weight: 600; }
+  @media (min-aspect-ratio: 21/20) {
+    .jr__dot { transform: translate(-50%, 52px); }
+    .jr__dot:nth-child(even) { transform: translate(-50%, calc(-100% - 52px)); }
+  }
+
+  /* ── EXPERTISE: one flower, and each petal opens its own note beside it ── */
+  .bloom { height: calc(var(--steps) * 60svh + 100svh); }
+  .bloom__pin { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+  .bloom__in { height: 100%; display: grid; grid-template-rows: auto 1fr auto; padding-block: calc(var(--header-h) + 18px) 26px; pointer-events: none; }
+  .bloom__title { font-size: clamp(2rem, 1rem + 2.7vw, 3.6rem); font-weight: 300; letter-spacing: -0.05em; line-height: 1; font-stretch: 88%; white-space: nowrap; }
+  .bloom__note { grid-row: 3; justify-self: center; font-family: var(--serif); font-style: italic; color: var(--ink-3); }
+  .bloom__labels { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+  .bloom__tip { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -50%); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.1em; color: var(--ink-3); opacity: 0; pointer-events: none; transition: opacity .5s, color .3s, background-color .3s, transform .5s var(--ease-out); }
+  :global(.bloom.is-live) .bloom__tip { opacity: 1; pointer-events: auto; }
+  .bloom__tip.is-on { color: var(--paper); background: var(--red); transform: translate(-50%, -50%) scale(1.15); }
+  .bloom__list { position: absolute; inset: 0; z-index: 1; padding: 0; margin: 0; pointer-events: none; }
+  .petal { position: absolute; left: var(--x, 50%); top: var(--y, 50%); width: 0; height: 0; opacity: 0; transition: opacity .5s var(--ease-out); }
+  .petal.is-on { opacity: 1; }
+  :global(.bloom:not(.is-live)) .petal { opacity: 0; }
+  .petal { --off: 84px; }
+  .petal::before { content: ''; position: absolute; top: 0; height: 1px; width: calc(var(--off) - 32px); background: var(--red); transform: scaleX(0); transition: transform .7s var(--ease-out); }
+  .petal.is-on::before { transform: scaleX(1); transition-delay: .15s; }
+  .petal[data-side='right']::before { left: 20px; transform-origin: left; }
+  .petal[data-side='left']::before { right: 20px; transform-origin: right; }
+  .petal__card { position: absolute; width: min(330px, 24vw); display: grid; gap: 8px; opacity: 0; transform: translateY(14px); transition: opacity .6s var(--ease-out), transform .8s var(--ease-out); }
+  .petal.is-on .petal__card { opacity: 1; transform: none; transition-delay: .25s; }
+  .petal[data-side='right'] .petal__card { left: var(--off); }
+  .petal[data-side='left'] .petal__card { right: var(--off); text-align: right; }
+  .petal[data-side='left'] .petal__card { width: min(330px, 24vw, calc(var(--x, 50%) - var(--off) - var(--gutter))); }
+  .petal[data-vert='down'] .petal__card { top: -12px; }
+  .petal[data-vert='up'] .petal__card { bottom: -12px; }
+  .petal__no { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.16em; color: var(--red); }
+  .petal__no i { font-style: normal; color: var(--ink-3); margin-left: 4px; }
+  .petal__title { font-size: clamp(1.5rem, 1rem + 1.2vw, 2.3rem); font-weight: 400; letter-spacing: -0.04em; line-height: 1.02; }
+  .petal__card p:not(.petal__back) { color: var(--ink-2); line-height: 1.45; font-size: 0.9375rem; }
+  .petal__back { color: var(--ink-3); font-size: 0.5625rem; letter-spacing: 0.1em; line-height: 1.7; }
+
+  /* ── EDUCATION: one credential at a time, the rings turning beside it ── */
+  .learn { height: calc(var(--steps) * 55svh + 100svh); }
+  .learn__pin { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+  .learn__in { height: 100%; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: auto 1fr auto; column-gap: var(--col-gap); padding-block: calc(var(--header-h) + 18px) 28px; }
+  .learn__head { grid-column: 7 / -1; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .learn__title { font-size: clamp(2rem, 1rem + 2.7vw, 3.6rem); font-weight: 300; letter-spacing: -0.05em; line-height: 1; font-stretch: 88%; }
+  .learn__ticks { display: flex; gap: 6px; }
+  .learn__tick { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.1em; color: var(--ink-3); border: 1px solid var(--rule); transition: color .3s, background-color .3s, border-color .3s, transform .4s var(--ease-out); }
+  .learn__tick:hover { color: var(--red); border-color: var(--red); }
+  .learn__tick.is-on { color: var(--paper); background: var(--red); border-color: var(--red); transform: scale(1.08); }
+  .learn__cards { grid-column: 7 / -1; display: grid; align-self: center; padding: 0; margin: 0; }
+  .lcard { grid-area: 1 / 1; display: grid; gap: clamp(8px, 1.6vh, 16px); align-content: center; opacity: 0; transform: translateY(26px); pointer-events: none; transition: opacity .5s var(--ease-out), transform .8s var(--ease-out); }
+  .lcard.is-on { opacity: 1; transform: none; pointer-events: auto; transition-delay: .12s; }
+  .lcard.is-past { transform: translateY(-26px); }
+  .lcard__kind { color: var(--ink-3); }
+  .lcard__award { font-size: clamp(2.4rem, min(8vh, 1rem + 4vw), 5rem); font-weight: 300; letter-spacing: -0.05em; line-height: 0.95; font-stretch: 88%; }
+  .lcard__field { font-size: var(--t-lede); color: var(--ink-2); letter-spacing: -0.02em; }
+  .lcard__where { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; padding-top: clamp(8px, 1.6vh, 16px); border-top: 1px solid var(--rule); }
+  .lcard__where em { font-family: var(--serif); font-size: clamp(1.2rem, 1rem + 0.8vw, 1.7rem); }
+  .lcard__where .label { color: var(--ink-3); }
+  .lcard__items { display: grid; grid-template-columns: 1fr 1fr; gap: 8px clamp(16px, 2vw, 32px); padding: 0; margin: 4px 0 0; }
+  .lcard__items li { font-size: 0.9375rem; line-height: 1.35; color: var(--ink-2); padding-left: 14px; position: relative; }
+  .lcard__items li::before { content: ''; position: absolute; left: 0; top: 0.66em; width: 6px; height: 1px; background: var(--ink-3); }
+  .learn__also { grid-column: 7 / -1; margin: 0; display: grid; grid-template-columns: 1fr 1.6fr; gap: 12px clamp(16px, 2vw, 32px); padding-top: 14px; border-top: 1px solid var(--rule); }
+  .learn__also dt { color: var(--ink-3); margin-bottom: 6px; }
+  .learn__also dd { margin: 0; color: var(--ink-2); font-size: 0.875rem; line-height: 1.45; }
+
+  /* ── CONTACT ── */
+  .end { min-height: 100svh; display: grid; grid-template-rows: 1fr auto; }
+  .end__in { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap); align-items: center; }
+  .end__text { grid-column: 7 / -1; display: grid; gap: clamp(14px, 2.4vh, 26px); justify-items: start; }
+  .end__title { font-size: clamp(4rem, 1rem + 11vw, 13rem); font-weight: 200; letter-spacing: -0.045em; line-height: 0.85; font-stretch: 92%; }
+  .end__prompt { font-family: var(--serif); font-style: italic; font-size: var(--t-lede); color: var(--ink-2); max-width: 30ch; }
+  .end__mail { font-size: clamp(1.3rem, 0.8rem + 2vw, 2.6rem); letter-spacing: -0.035em; padding-bottom: 4px; background: linear-gradient(var(--red), var(--red)) 0 100% / 100% 1px no-repeat; transition: color .3s, background-size .6s var(--ease-out); word-break: break-all; }
+  .end__mail:hover { color: var(--red); background-size: 100% 3px; }
+  .end__row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .end__copy { border: 1px solid var(--rule); border-radius: 999px; padding: 14px 18px; transition: background-color .3s, color .3s; }
+  .end__copy:hover { background: var(--ink); color: var(--paper); }
+  .foot { display: flex; justify-content: space-between; align-items: baseline; gap: 12px 24px; flex-wrap: wrap; padding-block: 22px; border-top: 1px solid var(--rule); color: var(--ink-2); }
+
+  /* ── Wide but short screens (landscape phones): the desktop layout, compacted ── */
+  @media (min-aspect-ratio: 21/20) and (max-height: 560px) {
+    .hero__in { padding-block: 6px 12px; }
+    .hero__text { gap: 3px; }
+    .hero__name { font-size: clamp(2.6rem, 21svh, 6rem); }
+    .hero__role { font-size: 1rem; margin-top: 0; }
+    .hero__pos { font-size: 1rem; }
+    .hero__creds { gap: 4px 18px; }
+    .hero__creds a { font-size: 0.8125rem; }
+    .jr__dot, .jr__dot:nth-child(even) { transform: translate(-50%, 14px); }
+    .say { padding-top: 14svh; min-height: 130svh; }
+    .say__thesis { font-size: clamp(2rem, 14vh, 4rem); }
+    .say__body p { padding-block: 8px; font-size: 0.875rem; line-height: 1.35; }
+    .say__body p:first-child { font-size: 1.05rem; }
+    .jr__in { padding-block: calc(var(--header-h) + 2px) 8px; row-gap: 6px; }
+    .jr__dot:not(.is-on) { opacity: 0 !important; }
+    .card { row-gap: 4px; }
+    .card__no b { font-size: 2.6rem; }
+    .card__side { gap: 2px; }
+    .card__chap, .card__along, .card__org span { display: none; }
+    .card__role, .card__role.is-long { font-size: clamp(1.4rem, 7.2vh, 2rem); }
+    .card__org { font-size: 1rem; }
+    .card__sides { margin-top: 0; padding-top: 6px; gap: 12px; }
+    .card__sides ul.is-long { columns: 1; }
+    .card__sides li { font-size: 0.75rem; line-height: 1.25; margin-bottom: 0; }
+    .card__sides li:nth-child(n + 3) { display: none; }
+    .card__sides .label { margin-bottom: 3px; }
+    .card__areas { padding-top: 6px; margin-top: 0; }
+    .card__areas li:nth-child(n + 2) { display: none; }
+    .card__areas b { font-size: 1rem; }
+    .card__areas span { font-size: 0.75rem; }
+    .bloom__title, .learn__title { font-size: clamp(1.5rem, 8vh, 2.2rem); }
+    .bloom__in, .learn__in { padding-block: calc(var(--header-h) + 6px) 10px; }
+    .bloom__note, .learn__also, .petal__back { display: none; }
+    .petal__title { font-size: 1.2rem; }
+    .petal__card p:not(.petal__back) { font-size: 0.78rem; line-height: 1.35; }
+    .petal__card { gap: 4px; }
+    .lcard__award { font-size: clamp(1.7rem, 9vh, 2.6rem); }
+    .lcard__field { font-size: 1rem; }
+    .lcard__items { display: none; }
+    .lcard { gap: 6px; }
+    .end__title { font-size: clamp(2.2rem, 13vh, 4rem); }
+    .end__prompt { font-size: 1rem; max-width: 40ch; }
+    .end__mail { font-size: 1.2rem; }
+    .end__text { gap: 8px; }
+    .foot { padding-block: 10px; }
+  }
+
+  @media (min-aspect-ratio: 21/20) and (max-height: 400px) {
+    .hero__cue, .hero__pos { display: none; }
+    .hero__name { font-size: clamp(2.2rem, 18svh, 4rem); }
+  }
+
+  /* ── Phones and small tablets: shapes sit above, words below ── */
+  @media (max-aspect-ratio: 21/20) {
+    .hero__in { grid-template-rows: minmax(30svh, 1fr) auto auto; padding-block: 12px 18px; }
+    .hero__text { grid-column: 1 / -1; grid-row: 2; align-self: end; }
+    .hero__name { font-size: clamp(3.2rem, min(23vw, 12svh), 9rem); }
+    .hero__creds { grid-column: 1 / -1; grid-row: 3; flex-direction: column; gap: 8px; margin-top: 16px; }
+    .hero__cue { display: none; }
+  }
+  /* Short phones: tighter, credentials in a row, so everything stays above the fold */
+  @media (max-aspect-ratio: 21/20) and (max-height: 720px) {
+    .hero__in { grid-template-rows: minmax(16svh, 1fr) auto auto; padding-block: 8px 14px; }
+    .hero__text { gap: 4px; }
+    .hero__name { font-size: clamp(2.8rem, min(21vw, 9.5svh), 9rem); }
+    .hero__role { margin-top: 4px; font-size: 1.05rem; }
+    .hero__pos { font-size: 1.05rem; }
+    .hero__creds { flex-direction: row; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; }
+    .hero__creds a { font-size: 0.8125rem; gap: 8px; }
+    .hero__creds b { width: 18px; height: 18px; }
+  }
+  /* Short phones: shorter journey cards, so they stay below the ribbon */
+  @media (max-aspect-ratio: 21/20) and (max-height: 800px) {
+    .card { row-gap: 6px; }
+    .card__no b { font-size: 2rem; }
+    .card__role, .card__role.is-long { font-size: clamp(1.5rem, 7.4vw, 2.1rem); }
+    .card__org { font-size: 1.05rem; }
+    .card__org span { display: none; }
+    .card__sides { gap: 10px; padding-top: 8px; margin-top: 2px; }
+    .card__sides li { font-size: 0.78rem; line-height: 1.28; }
+    .card__sides li:nth-child(n + 3) { display: none; }
+    .card__sides .label { margin-bottom: 4px; }
+    .card__areas li:nth-child(n + 2) { display: none; }
+    .card__areas span { font-size: 0.8125rem; }
+    .jr__cards { min-height: 0; }
+  }
+  @media (max-aspect-ratio: 21/20) and (max-height: 700px) {
+    .card__sides li:nth-child(n + 2) { display: none; }
+  }
+  @media (max-aspect-ratio: 21/20) {
+    :global(html.no-field) .hero__still { grid-column: 1 / -1; position: absolute; top: 80px; left: 12%; width: 76%; }
+    .say { padding-top: 12svh; min-height: 140svh; }
+    .say__in { grid-template-columns: 1fr; row-gap: 20px; }
+    .say__thesis, .say__body { grid-column: 1 / -1; }
+    .jr__cards { align-self: end; min-height: 56svh; }
+    .card { grid-template-columns: 1fr; row-gap: 10px; inset: auto 0 0 0; padding: 16px 16px 14px; border: 1px solid var(--rule); border-radius: 22px; background: color-mix(in oklab, var(--paper-3) 90%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 22px 44px -28px rgb(31 26 36 / 0.4); }
+    .card__side { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr; column-gap: 14px; row-gap: 0; align-items: center; padding: 0 0 10px; border-bottom: 1px solid var(--rule-soft); }
+    .card__no { grid-row: 1 / span 2; margin: 0; }
+    .card__no b { font-size: 2.8rem; }
+    .card__no span { display: none; }
+    .card__sep { display: none; }
+    .card__note { display: block; margin-top: 2px; }
+    .card__when { font-size: 0.9375rem; }
+    .card__len { font-size: 0.8125rem; gap: 8px; }
+    .petal__back { display: none; }
+    .card__chap { display: none; }
+    .card__main { grid-column: 1 / -1; gap: 6px; }
+    .card__role { font-size: clamp(1.9rem, 9vw, 3rem); }
+    .card__along { display: none; }
+    .card__sides { grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 10px; margin-top: 6px; }
+    .card__sides ul.is-long { display: grid; columns: auto; }
+    .card__sides ul.is-long li { margin-bottom: 0; }
+    .card__sides li { font-size: 0.8125rem; line-height: 1.3; }
+    .card__sides li:nth-child(n + 4) { display: none; }
+    .card__areas { grid-template-columns: 1fr; }
+    .card__areas li:nth-child(n + 2) { display: none; }
+    .jr__rail { margin-top: 12px; }
+    .jr__dot { font-size: 0.6875rem; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--rule); background: color-mix(in oklab, var(--paper) 90%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+    .jr__dot[data-side='r'] { transform: translate(16px, -50%); }
+    .jr__dot[data-side='l'] { transform: translate(calc(-100% - 16px), -50%); }
+    .jr__dot.is-on { font-size: 0.75rem; }
+    :global(.jr.is-live) .jr__dot:not(.is-on) { opacity: 0; }
+    .bloom__in { align-content: start; }
+    .bloom__title, .bloom__note { display: none; }
+    .bloom__tip { display: none; }
+    .petal { left: 0; right: 0; top: auto; bottom: 6svh; width: auto; height: auto; padding-inline: var(--gutter); }
+    .petal::before { display: none; }
+    .petal__card { position: static; width: auto; transform: none; text-align: left !important; }
+    .petal[data-side] .petal__card { left: auto; right: auto; width: auto; }
+    .learn__in { grid-template-rows: 1fr auto auto; padding-block: calc(var(--header-h) + 8px) 18px; }
+    .learn__head, .learn__cards, .learn__also { grid-column: 1 / -1; }
+    .learn__cards { grid-row: 2; }
+    .learn__head { grid-row: 3; justify-content: center; margin-top: 14px; }
+    .learn__title { display: none; }
+    .learn__cards { align-self: end; }
+    .lcard__items { grid-template-columns: 1fr; }
+    .lcard__items li:nth-child(n + 4) { display: none; }
+    .learn__also { display: none; }
+    .end__text { grid-column: 1 / -1; }
+    .end__in { align-items: end; padding-bottom: 6svh; }
+  }
+</style>
