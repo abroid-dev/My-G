@@ -1,0 +1,93 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# PROFILE · the single source for who Geleta is and how the site introduces her.
+# Sources: LinkedIn export (Profile.pdf) and her CV (Geleta Addis CV.pdf), November 2026.
+# Where the two disagree, the CV wins; conflicts are listed in the README.
+# Wording marked "provisional" needs Geleta's approval.
+# ─────────────────────────────────────────────────────────────────────────────
+- id: main
+  name:
+    first: Geleta
+    last: Addis
+
+  positioning:
+    title: Commercial Leader with Roots in Marketing
+    provisional: true              # set to false once Geleta confirms
+    alternatives:                  # options to discuss with her
+      - Marketing Strategist and Commercial Leader
+      - Chief Commercial Officer
+
+  # Verbatim from LinkedIn, kept for reference and SEO.
+  linkedinHeadline: "AICE Mentor | CCO | Head of Sales & Partnership | Customer Operations & Key Account Management | FinTech Experience | Cybersecurity Certified (Google) | Virtual Assistant"
+  location: Addis Ababa, Ethiopia
+
+  # Written in Geleta's own voice (first person). Keep it that way.
+  thesis:
+    lead: Every transaction has two sides. I've worked
+    mark: both.
+
+  # Position statement. Each sentence is built only from verified roles.
+  statement:
+    - I'm Chief Commercial Officer at Emaal and at FinPay, in Addis Ababa.
+    - I came up through Ethiopian fintech. Across ebirr, YaYa Wallet and Chapa I sold to merchants, took the calls, led marketing, ran operations and customer operations, and headed sales and partnerships.
+    - I've run the campaign, answered the call, designed the process and led the partnership. I trained as an engineer before any of it.
+  statementPending:
+    - One line on what I help companies do
+
+  portraitAlt: Geleta Addis, in a navy blazer and white shirt, arms crossed, looking at the camera.
+
+  # Margin notes on the portrait, in the spirit of an exploded-view drawing.
+  annotations:
+    - key: A
+      label: BA, Electro Mechanical Engineering
+      detail: Hawassa University · 2019
+      study: hawassa-engineering
+    - key: B
+      label: MA, Business Administration
+      detail: Lunar International College · 2023
+      study: lunar-ma
+    - key: C
+      label: Google Cybersecurity
+      detail: Professional Certificate
+      study: google-cybersecurity
+
+  contact:
+    email: addisgeleta87@gmail.com
+    linkedin: https://www.linkedin.com/in/geleta-addis
+    # Paste a Formspree / Netlify Forms endpoint here to receive messages
+    # directly. While empty, the form opens a pre-filled email instead.
+    formEndpoint: ""
+    # Her other profiles: paste the full link to show the official icon.
+    # Leave empty to hide. (Only LinkedIn is confirmed so far.)
+    socials:
+      instagram: ""
+      x: ""
+      telegram: ""       # e.g. https://t.me/username
+      whatsapp: ""       # e.g. https://wa.me/2519XXXXXXXX
+      facebook: ""
+      tiktok: ""
+    prompt: For commercial leadership, partnerships and market entry in Ethiopia.
+
+  topSkills:
+    - Teamwork
+    - Strategic Communications
+    - Customer Service
+
+  # From her CV. Shown under Education.
+  skills:
+    - Communication and interpersonal skills
+    - Writing proposals
+    - Team organisation and team building
+    - Customer handling
+    - Collaboration, influencing and problem resolution
+  languages:
+    - { name: Amharic, level: Native }
+    - { name: English, level: Proficient }
+
+  seo:
+    title: Geleta Addis · Commercial Leader, Addis Ababa
+    description: Geleta Addis is Chief Commercial Officer at Emaal and FinPay in Addis Ababa, with more than five years across Ethiopian fintech in sales, marketing, operations, customer operations, and partnerships.
+    siteUrl: https://geletaaddis.com   # replace with the real domain
+
+  # true  → missing information shows as marked placeholders (review copy)
+  # false → placeholders are hidden and only verified content shows
+  showPlaceholders: true
