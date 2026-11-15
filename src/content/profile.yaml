@@ -27,7 +27,7 @@
 
   # Position statement. Each sentence is built only from verified roles.
   statement:
-    - I'm Chief Commercial Officer at Emaal and at FinPay, in Addis Ababa.
+    - I'm Chief Commercial Officer at Emaal, in Addis Ababa.
     - I came up through Ethiopian fintech. Across ebirr, YaYa Wallet and Chapa I sold to merchants, took the calls, led marketing, ran operations and customer operations, and headed sales and partnerships.
     - I've run the campaign, answered the call, designed the process and led the partnership. I trained as an engineer before any of it.
   statementPending:
@@ -85,7 +85,7 @@
 
   seo:
     title: Geleta Addis · Commercial Leader, Addis Ababa
-    description: Geleta Addis is Chief Commercial Officer at Emaal and FinPay in Addis Ababa, with more than five years across Ethiopian fintech in sales, marketing, operations, customer operations, and partnerships.
+    description: Geleta Addis is Chief Commercial Officer at Emaal in Addis Ababa, with more than five years across Ethiopian fintech in sales, marketing, operations, customer operations, and partnerships.
     siteUrl: https://geletaaddis.com   # replace with the real domain
 
   # true  → missing information shows as marked placeholders (review copy)
