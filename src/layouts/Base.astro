@@ -29,10 +29,7 @@ const personLd = {
   '@type': 'Person',
   name: `${profile.name.first} ${profile.name.last}`,
   jobTitle: 'Chief Commercial Officer',
-  worksFor: [
-    { '@type': 'Organization', name: 'Emaal' },
-    { '@type': 'Organization', name: 'FinPay Digital Financial Solution S.C' },
-  ],
+  worksFor: { '@type': 'Organization', name: 'Emaal', legalName: 'FinPay Digital Financial Solutions S.C' },
   address: { '@type': 'PostalAddress', addressLocality: 'Addis Ababa', addressCountry: 'ET' },
   sameAs: [profile.contact.linkedin],
   alumniOf: [
