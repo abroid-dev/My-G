@@ -4,7 +4,7 @@
 # Where the two disagree, the CV wins; conflicts are listed in the README.
 # Wording marked "provisional" needs Geleta's approval.
 # ─────────────────────────────────────────────────────────────────────────────
-- id: main
+main:
   name:
     first: Geleta
     last: Addis
