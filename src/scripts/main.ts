@@ -382,7 +382,10 @@ function menu() {
 }
 
 /* ───────────────────────── Theme ───────────────────────── */
+// Dark theme is off for now (see DARK_ON in Base.astro): stay light, no toggle, no system-follow.
+const DARK_ON = false;
 function theme() {
+  if (!DARK_ON) return;
   const buttons = $$('[data-theme-toggle]');
   const meta = document.querySelector('meta[name="theme-color"]');
   const current = (): 'light' | 'dark' => (html.dataset.theme === 'dark' ? 'dark' : 'light');

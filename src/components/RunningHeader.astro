@@ -105,7 +105,8 @@ const cvHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/geleta-addis-cv.p
   .rh__folio-name { display: inline-block; }
 
   .rh__tools { justify-self: end; display: flex; align-items: center; gap: 10px; }
-  .rh__theme {
+  .rh__theme { display: none !important; } /* dark theme off for now */
+  .rh__theme--later {
     width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center;
     border: 1px solid var(--rule-soft); background: var(--paper-3); color: var(--ink);
     transition: background-color .3s, color .3s, border-color .3s, transform .5s var(--ease-out);
