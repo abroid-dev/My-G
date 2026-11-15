@@ -135,18 +135,8 @@ async function startField(heroDelay: number) {
     if (spot) { const d = b.size * 1.55; spot.style.width = spot.style.height = `${d}px`; spot.style.transform = `translate(${b.x - d / 2}px, ${b.y - d / 2 - b.size * 0.05}px)`; }
   };
   f.onLayout(box);
-  // Hovering her portrait lets the particles show through, so they part
-  // around the cursor; moving away resolves back to the sharp photo.
-  if (fine && !reduced) {
-    let over = false;
-    addEventListener('pointermove', (e) => {
-      const b = f.portraitBox(hand.which);
-      const inside = Math.abs(e.clientX - b.x) < b.size * 0.36 && Math.abs(e.clientY - b.y) < b.size * 0.48 && (hand.start > 0.9 || hand.end > 0.9);
-      if (inside === over) return;
-      over = inside;
-      gsap.to(hand, { hover: inside ? 1 : 0, duration: inside ? 0.45 : 0.9, ease: 'power2.out', onUpdate: paint, overwrite: true });
-    }, { passive: true });
-  }
+  // The photo stays sharp when the pointer is over it. (An earlier version swapped it for the
+  // rougher particle portrait on hover; on some browsers and screens that looked blocky.)
   const topFade = () => { hand.start = 1 - Math.min(1, scrollY / (innerHeight * 0.09)); paint(); };
   addEventListener('scroll', topFade, { passive: true });
   topFade();
