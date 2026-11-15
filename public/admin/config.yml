@@ -1,0 +1,195 @@
+# The editor for the site, at /admin. Every change is saved as a commit to the
+# repo, which rebuilds and publishes the site. The site's content rules check
+# each edit when it builds, so a bad edit can never replace the live site.
+# Setup and sign-in steps: see ADMIN.md in the repo.
+
+backend:
+  name: github
+  repo: abroid-dev/My-G
+  branch: main
+  # When the sign-in helper is deployed (see ADMIN.md), add its address here:
+  # base_url: https://YOUR-AUTH-WORKER.workers.dev
+
+site_url: https://abroid-dev.github.io/My-G/
+display_url: https://abroid-dev.github.io/My-G/
+publish_mode: simple
+omit_empty_optional_fields: true
+media_folder: public/uploads
+public_folder: /uploads
+locale: en
+
+collections:
+  # ───────────────────────────── Roles ─────────────────────────────
+  - name: entries
+    label: Roles
+    label_singular: Role
+    folder: src/content/entries
+    create: true
+    extension: md
+    format: frontmatter
+    slug: "{{org}}-{{role}}"
+    summary: "{{role}} · {{org}} · {{start}}"
+    sortable_fields: [start, org, role]
+    fields:
+      - { label: Company, name: org, widget: string, hint: "As it should appear on the site, for example Emaal." }
+      - { label: Job title, name: role, widget: string }
+      - { label: Note under the company (optional), name: roleNote, widget: string, required: false, hint: "For example the legal name or the team." }
+      - { label: Start (YYYY-MM), name: start, widget: string, pattern: ['^\d{4}-(0[1-9]|1[0-2])$', "Use year-month, for example 2026-02"] }
+      - { label: End (YYYY-MM), name: end, widget: string, required: false, pattern: ['^\d{4}-(0[1-9]|1[0-2])$', "Use year-month, for example 2026-02"], hint: "Leave empty if this is your current role." }
+      - { label: Location, name: location, widget: string, required: false, hint: "Defaults to Addis Ababa, Ethiopia." }
+      - label: Chapter of the journey
+        name: chapter
+        widget: select
+        options:
+          - { label: "I · Foundation", value: foundation }
+          - { label: "II · Market", value: market }
+          - { label: "III · Frontline", value: frontline }
+          - { label: "IV · System", value: system }
+          - { label: "V · Revenue", value: revenue }
+      - { label: This is my current role, name: current, widget: boolean, default: false, required: false }
+      - { label: Feature in the opening, name: featured, widget: boolean, default: false, required: false, hint: "Only one role should be featured: it appears under your name." }
+      - label: Short summary (optional)
+        name: brief
+        widget: object
+        required: false
+        fields:
+          - { label: For the customer, name: customer, widget: string }
+          - { label: For the company, name: company, widget: string }
+      - label: Areas of work
+        name: accounts
+        widget: select
+        multiple: true
+        required: false
+        options:
+          - { label: Campaigns and communication, value: "1000" }
+          - { label: Customer operations, value: "2000" }
+          - { label: Partnerships and key accounts, value: "3000" }
+          - { label: "Operations, risk and compliance", value: "4000" }
+          - { label: Commercial leadership, value: "5000" }
+      - { label: What you did for the customer, name: customerSide, widget: list, required: false, field: { label: Point, name: point, widget: string } }
+      - { label: What you did for the company, name: companySide, widget: list, required: false, field: { label: Point, name: point, widget: string } }
+      - label: Results with numbers
+        name: reconciliation
+        widget: list
+        required: false
+        hint: "Only add a number if you can name where it comes from."
+        fields:
+          - { label: Figure, name: figure, widget: string, hint: "For example +38% or 30" }
+          - { label: What it measures, name: label, widget: string }
+          - { label: Source, name: source, widget: string, hint: "For example CV, 2026" }
+      - { label: Still to add (notes to yourself), name: pending, widget: list, required: false, field: { label: Note, name: note, widget: string } }
+      - { label: Visibility, name: status, widget: select, required: false, default: published, options: [{ label: Published, value: published }, { label: Draft (hidden), value: draft }] }
+
+  # ───────────────────────────── Education ─────────────────────────────
+  - name: studies
+    label: Education
+    label_singular: Education item
+    folder: src/content/studies
+    create: true
+    extension: md
+    format: frontmatter
+    slug: "{{institution}}-{{award}}"
+    summary: "{{award}} · {{institution}}"
+    fields:
+      - { label: School or provider, name: institution, widget: string }
+      - { label: Award, name: award, widget: string, hint: "For example Master's Degree (MA)" }
+      - { label: Field of study, name: field, widget: string }
+      - label: Kind
+        name: kind
+        widget: select
+        options: [{ label: Degree, value: degree }, { label: Diploma, value: diploma }, { label: Certificate, value: certificate }]
+      - { label: Start (YYYY-MM), name: start, widget: string, required: false, pattern: ['^\d{4}-(0[1-9]|1[0-2])$', "Use year-month, for example 2021-09"] }
+      - { label: End (YYYY-MM), name: end, widget: string, required: false, pattern: ['^\d{4}-(0[1-9]|1[0-2])$', "Use year-month, for example 2023-09"] }
+      - label: Chapter of the journey (optional)
+        name: chapter
+        widget: select
+        required: false
+        options:
+          - { label: "I · Foundation", value: foundation }
+          - { label: "II · Market", value: market }
+          - { label: "III · Frontline", value: frontline }
+          - { label: "IV · System", value: system }
+          - { label: "V · Revenue", value: revenue }
+      - { label: Courses or items under it, name: items, widget: list, required: false, field: { label: Item, name: item, widget: string } }
+      - { label: Order on the page, name: order, widget: number, value_type: int, default: 0, required: false, hint: "Smaller numbers come first." }
+
+  # ───────────────────────────── Profile and site text ─────────────────────────────
+  - name: site
+    label: Profile and site text
+    files:
+      - name: profile
+        label: Profile
+        file: src/content/profile.yaml
+        fields:
+          - label: Profile
+            name: main
+            widget: object
+            fields:
+              - label: Name
+                name: name
+                widget: object
+                fields:
+                  - { label: First name, name: first, widget: string }
+                  - { label: Last name, name: last, widget: string }
+              - label: Positioning line under your name
+                name: positioning
+                widget: object
+                fields:
+                  - { label: Line, name: title, widget: string }
+                  - { label: Still to be confirmed, name: provisional, widget: boolean, default: false, required: false }
+                  - { label: Other options to consider, name: alternatives, widget: list, required: false, field: { label: Option, name: option, widget: string } }
+              - { label: LinkedIn headline (kept for reference), name: linkedinHeadline, widget: string }
+              - { label: Location, name: location, widget: string }
+              - label: The big line in "In one line"
+                name: thesis
+                widget: object
+                fields:
+                  - { label: Lead, name: lead, widget: string }
+                  - { label: Highlighted last word, name: mark, widget: string }
+              - { label: The three lines of your statement (first person), name: statement, widget: list, field: { label: Line, name: line, widget: text } }
+              - { label: Notes to yourself about the statement, name: statementPending, widget: list, required: false, field: { label: Note, name: note, widget: string } }
+              - { label: Photo description (for screen readers), name: portraitAlt, widget: string }
+              - label: Credential badges on the opening page
+                name: annotations
+                widget: list
+                fields:
+                  - { label: Letter, name: key, widget: string }
+                  - { label: Title, name: label, widget: string }
+                  - { label: Detail, name: detail, widget: string }
+                  - { label: Linked education item, name: study, widget: string, required: false, hint: "The file name of the education item, without .md" }
+              - label: Contact
+                name: contact
+                widget: object
+                fields:
+                  - { label: Email, name: email, widget: string }
+                  - { label: LinkedIn link, name: linkedin, widget: string }
+                  - { label: Contact form address (optional), name: formEndpoint, widget: string, required: false }
+                  - label: Other profiles (full links)
+                    name: socials
+                    widget: object
+                    required: false
+                    fields:
+                      - { label: Instagram, name: instagram, widget: string, required: false }
+                      - { label: X, name: x, widget: string, required: false }
+                      - { label: Telegram, name: telegram, widget: string, required: false }
+                      - { label: WhatsApp, name: whatsapp, widget: string, required: false }
+                      - { label: Facebook, name: facebook, widget: string, required: false }
+                      - { label: TikTok, name: tiktok, widget: string, required: false }
+                  - { label: Line above the email, name: prompt, widget: string }
+              - { label: Top skills, name: topSkills, widget: list, required: false, field: { label: Skill, name: skill, widget: string } }
+              - { label: Strengths (shown under Education), name: skills, widget: list, required: false, field: { label: Strength, name: strength, widget: string } }
+              - label: Languages
+                name: languages
+                widget: list
+                required: false
+                fields:
+                  - { label: Language, name: name, widget: string }
+                  - { label: Level, name: level, widget: string }
+              - label: Search and link preview
+                name: seo
+                widget: object
+                fields:
+                  - { label: Title, name: title, widget: string }
+                  - { label: Description, name: description, widget: text }
+                  - { label: Site address, name: siteUrl, widget: string, hint: "Her real domain, once she has one." }
+              - { label: Show unfinished-note placeholders, name: showPlaceholders, widget: boolean, default: true, required: false }
