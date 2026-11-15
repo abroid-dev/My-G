@@ -50,6 +50,9 @@ pending: []                    # remove what you've now answered
 
 **Domain.** Replace `https://geletaaddis.com` in `astro.config.mjs`, `profile.yaml` and `public/robots.txt`.
 
+## Edit the content without code
+There is an editor at `/admin` for roles, education and profile text. Setup and sign-in: see [ADMIN.md](ADMIN.md).
+
 ## Share a review link (GitHub Pages)
 1. Create a GitHub repo (private repos need a paid plan for Pages, so a public one is simplest), then push this folder to its `main` branch.
 2. In the repo: **Settings → Pages → Source: GitHub Actions**.
