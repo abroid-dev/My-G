@@ -13,6 +13,7 @@ export interface Folio { no: string; id: string; name: string; note?: string }
 interface Props { folios: Folio[]; name: { first: string; last: string }; contact: { email: string; linkedin: string; socials?: Record<string, string> }; portraitAlt: string; tagline?: string; location?: string }
 const { folios, name, contact, portraitAlt, tagline = '', location = '' } = Astro.props;
 const items = folios.filter((f) => f.id !== 'opening');
+const cvHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/geleta-addis-cv.pdf`;
 ---
 <header class="rh" data-header>
   <div class="rh__inner wrap">
@@ -79,6 +80,7 @@ const items = folios.filter((f) => f.id !== 'opening');
     <div class="pm__foot">
       <p class="pm__who"><em>{tagline}</em>{location && <span class="label">{location}</span>}</p>
       <div class="pm__reach">
+        <a class="pm__cv label" href={cvHref} download="Geleta-Addis-CV.pdf">Download CV <span aria-hidden="true">↓</span></a>
         <a class="ink-link label" href={`mailto:${contact.email}`}>{contact.email}</a>
         <SocialIcons email={contact.email} linkedin={contact.linkedin} socials={contact.socials} size="sm" />
       </div>
@@ -175,6 +177,8 @@ const items = folios.filter((f) => f.id !== 'opening');
   .pm__who { display: flex; align-items: baseline; gap: 6px 18px; flex-wrap: wrap; margin: 0; }
   .pm__who em { font-family: var(--serif); font-size: var(--t-lede); color: var(--ink-2); }
   .pm__who .label { color: var(--ink-3); }
+  .pm__cv { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 999px; background: var(--ink); color: var(--paper); transition: background-color .3s; }
+  .pm__cv:hover { background: var(--red); }
   .pm__reach { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
   /* Short screens (landscape phones): the menu keeps every row on one screen */
   @media (max-height: 560px) {
