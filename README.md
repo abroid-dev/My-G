@@ -59,7 +59,7 @@ pending: []                    # remove what you've now answered
 ## CV vs LinkedIn: how conflicts were resolved
 | Item | LinkedIn | CV | On the site |
 |---|---|---|---|
-| CCO employer | Emaal, Mar 2026 | FinPay Digital Financial Solution S.C, Feb 2026 | Both, as two current roles (confirmed by the user: she worked at two places) |
+| CCO employer | Emaal, Mar 2026 | FinPay Digital Financial Solution S.C, Feb 2026 | One company: Emaal is the brand of FinPay Digital Financial Solutions S.C (she confirmed this on WhatsApp). One role, CV start date (Feb 2026) |
 | Wildberries, Key Account Manager | Mar 2026 to now | not listed | Kept, flagged for review (`?review`) until she confirms |
 | Chapa | Jan to Mar 2026 | 25 Dec 2025 to 20 Feb 2026 | CV |
 | e-birr marketing | Aug 2020 to Feb 2024 | Aug 2022 to Jan 2024 | CV |
@@ -72,7 +72,7 @@ pending: []                    # remove what you've now answered
 Not published on purpose: her phone number and the three referees' names and numbers (privacy).
 
 ## Open questions for Geleta
-- Emaal is on LinkedIn but not on her CV, and FinPay is on her CV but not LinkedIn. Add each to the other.
+- Align LinkedIn with her CV: the company and its start month (LinkedIn says Emaal, Mar 2026; the CV says FinPay, Feb 2026).
 - YaYa Wallet: are the real dates Nov 2024 to Dec 2025 (LinkedIn)? The CV dates are inconsistent.
 - Wildberries: is it a current role?
 - BA or BSc for the engineering degree? Master's: MA or MBA?
