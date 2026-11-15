@@ -48,6 +48,7 @@ const keyOf = (id: string) => annotations.find((a) => a.study === id)?.key;
 const kindLabel: Record<string, string> = { degree: 'Degree', diploma: 'Diploma', certificate: 'Certificate' };
 const pad = (n: number) => String(n).padStart(2, '0');
 const c = profile.contact;
+const cvHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/geleta-addis-cv.pdf`;
 const numberWords = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve'];
 const count = (n: number) => numberWords[n] ?? String(n);
 
@@ -222,6 +223,7 @@ const folios: Folio[] = [
           <div class="end__row js-fade">
             <SocialIcons email={c.email} linkedin={c.linkedin} socials={c.socials} />
             <button class="end__copy label" type="button" data-copy={c.email} data-magnetic>Copy email</button>
+            <a class="end__copy end__dl label" href={cvHref} download="Geleta-Addis-CV.pdf" data-magnetic>Download CV <span aria-hidden="true">↓</span></a>
           </div>
         </div>
       </div>
@@ -403,6 +405,8 @@ const folios: Folio[] = [
   .end__row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .end__copy { border: 1px solid var(--rule); border-radius: 999px; padding: 14px 18px; transition: background-color .3s, color .3s; }
   .end__copy:hover { background: var(--ink); color: var(--paper); }
+  .end__dl { display: inline-flex; align-items: center; gap: 10px; background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .end__dl:hover { background: var(--red); border-color: var(--red); }
   .foot { display: flex; justify-content: space-between; align-items: baseline; gap: 12px 24px; flex-wrap: wrap; padding-block: 22px; border-top: 1px solid var(--rule); color: var(--ink-2); }
 
   /* ── Wide but short screens (landscape phones): the desktop layout, compacted ── */
